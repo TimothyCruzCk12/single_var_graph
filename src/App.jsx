@@ -1,0 +1,14 @@
+import React from 'react';
+import SingleVarGraph from './components/SingleVarGraph'
+
+
+function App() {
+  return (
+      <div className="App">
+        <SingleVarGraph />
+      </div>
+  );
+}
+
+
+export default App;
