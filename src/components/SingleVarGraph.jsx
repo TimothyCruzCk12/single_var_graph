@@ -46,6 +46,9 @@ const DRAW_VERTICAL_MARGIN = 40;
 const drawYMin = LINE_Y - DRAW_VERTICAL_MARGIN;
 const drawYMax = LINE_Y + DRAW_VERTICAL_MARGIN;
 
+/** Tolerance (px) to consider a segment endpoint "at" the graph end for drawing an arrow */
+const END_ARROW_TOLERANCE = 2;
+
 /** Empty circle (open point) detection: max horizontal span to count as "around one tick" */
 const EMPTY_CIRCLE_MAX_SPAN = fullUnit * 0.9;
 /** Min vertical extent (px) so we require some up/down motion */
@@ -469,6 +472,40 @@ const SingleVarGraph = () => {
 							strokeLinejoin="round"
 						/>
 					))}
+				{/* Gray number-line arrows (drawn first so blue segment arrows can cover them) */}
+				<polygon
+					points={`${lineDrawStart + 8},${LINE_Y - 6} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 8},${LINE_Y + 6}`}
+					fill="#333"
+				/>
+				<polygon
+					points={`${lineDrawEnd - 8},${LINE_Y - 6} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 8},${LINE_Y + 6}`}
+					fill="#333"
+				/>
+				{/* Arrows on drawn segments that extend to the graph ends (same position/size as gray arrows so they cover them) */}
+				{segments.flatMap((seg, segIdx) => {
+					const atLeftEnd = seg[0].x <= lineStart + END_ARROW_TOLERANCE;
+					const atRightEnd = seg[1].x >= lineEnd - END_ARROW_TOLERANCE;
+					const arrows = [];
+					if (atLeftEnd) {
+						arrows.push(
+							<polygon
+								key={`${segIdx}-left`}
+								points={`${lineDrawStart + 8},${LINE_Y - 6} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 8},${LINE_Y + 6}`}
+								fill="#1967d2"
+							/>
+						);
+					}
+					if (atRightEnd) {
+						arrows.push(
+							<polygon
+								key={`${segIdx}-right`}
+								points={`${lineDrawEnd - 8},${LINE_Y - 6} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 8},${LINE_Y + 6}`}
+								fill="#1967d2"
+							/>
+						);
+					}
+					return arrows;
+				})}
 				{/* Current stroke in progress */}
 				{path.length >= 2 && (
 					<path
@@ -480,15 +517,6 @@ const SingleVarGraph = () => {
 						strokeLinejoin="round"
 					/>
 				)}
-				{/* Arrows on top of drawn line */}
-				<polygon
-					points={`${lineDrawStart + 8},${LINE_Y - 6} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 8},${LINE_Y + 6}`}
-					fill="#333"
-				/>
-				<polygon
-					points={`${lineDrawEnd - 8},${LINE_Y - 6} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 8},${LINE_Y + 6}`}
-					fill="#333"
-				/>
 			</svg>
 		</div>
 	);
