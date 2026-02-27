@@ -320,6 +320,10 @@ const SingleVarGraph = () => {
 				overflow: 'hidden',
 				backgroundColor: '#fff',
 				touchAction: 'none',
+				userSelect: 'none',
+				WebkitUserSelect: 'none',
+				MozUserSelect: 'none',
+				msUserSelect: 'none',
 			}}
 			onMouseDown={handlePointerDown}
 			onMouseMove={handlePointerMove}
@@ -330,7 +334,7 @@ const SingleVarGraph = () => {
 			onTouchEnd={handleTouchEnd}
 			onTouchCancel={handleTouchEnd}
 		>
-			<div className={`segmented-glow-button simple-glow${!showGlow ? ' hide-orbit' : ''}`} style={{ position: 'absolute', top: 11, right: 12 }}>
+			<div className={`segmented-glow-button simple-glow compact${!showGlow ? ' hide-orbit' : ''}`} style={{ position: 'absolute', top: 11, right: 12 }}>
 				<div className="segment-container">
 					<button
 						type="button"

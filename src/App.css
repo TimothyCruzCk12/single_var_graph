@@ -177,6 +177,21 @@
   pointer-events: none;
 }
 
+/* Compact variant: original small button size */
+.segmented-glow-button.compact {
+  padding: 4px;
+}
+
+.segmented-glow-button.compact .segment-container {
+  gap: 2px;
+}
+
+.segmented-glow-button.compact .segment {
+  height: auto;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
