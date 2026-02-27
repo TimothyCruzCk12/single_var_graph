@@ -9,16 +9,17 @@ const LINE_Y = HEIGHT / 2;
 const lineLeft = PADDING;
 const lineRight = WIDTH - PADDING;
 const lineLength = lineRight - lineLeft;
-/** Slightly reduce each segment width (0–1; smaller = narrower segments) */
-const SEGMENT_SCALE = 0.9;
-const effectiveLineLength = lineLength * SEGMENT_SCALE;
+/** Grid and number-line tick spacing (px per unit) */
+const GRID_CELL = 30;
+const fullUnit = GRID_CELL;
+/** Line length so ticks are exactly fullUnit (30px) apart */
+const effectiveLineLength = (MAX - MIN) * fullUnit;
 const lineMargin = (lineLength - effectiveLineLength) / 2;
 const lineLeftEffective = lineLeft + lineMargin;
 const lineRightEffective = lineRight - lineMargin;
 /** One full segment past -5 and 5 so arrows sit at -6 and 6 */
 const EXTENDED_MIN = -6;
 const EXTENDED_MAX = 6;
-const fullUnit = effectiveLineLength / (MAX - MIN);
 const lineStart = lineLeftEffective - fullUnit;
 const lineEnd = lineRightEffective + fullUnit;
 const extendedLength = lineEnd - lineStart;
@@ -27,8 +28,6 @@ const ARROW_EXTENSION = fullUnit * 0.1;
 const lineDrawStart = lineStart - ARROW_EXTENSION;
 const lineDrawEnd = lineEnd + ARROW_EXTENSION;
 
-/** Grid cell size: half of one segment (between tick lines) */
-const GRID_CELL = fullUnit / 2;
 /** Offset so the grid is centered in the container */
 const GRID_OFFSET_X = (WIDTH - Math.floor(WIDTH / GRID_CELL) * GRID_CELL) / 2;
 const GRID_OFFSET_Y = (HEIGHT - Math.floor(HEIGHT / GRID_CELL) * GRID_CELL) / 2;
@@ -124,6 +123,7 @@ const SingleVarGraph = () => {
 		history.slice(0, historyIndex)
 	);
 	const [isDrawing, setIsDrawing] = useState(false);
+	const [showGlow, setShowGlow] = useState(true);
 	const containerRef = useRef(null);
 	const isDrawingRef = useRef(false);
 	isDrawingRef.current = isDrawing;
@@ -307,13 +307,6 @@ const SingleVarGraph = () => {
 	const canRedo = historyIndex < history.length;
 	const canReset = history.length > 0;
 
-	const buttonStyle = (enabled) => ({
-		padding: '4px 8px',
-		fontSize: 12,
-		cursor: enabled ? 'pointer' : 'default',
-		opacity: enabled ? 1 : 0.5,
-	});
-
 	return (
 		<div
 			ref={containerRef}
@@ -325,7 +318,7 @@ const SingleVarGraph = () => {
 				border: '1px solid #ccc',
 				borderRadius: 4,
 				overflow: 'hidden',
-				backgroundColor: '#fafafa',
+				backgroundColor: '#fff',
 				touchAction: 'none',
 			}}
 			onMouseDown={handlePointerDown}
@@ -337,48 +330,43 @@ const SingleVarGraph = () => {
 			onTouchEnd={handleTouchEnd}
 			onTouchCancel={handleTouchEnd}
 		>
-			<div
-				style={{
-					position: 'absolute',
-					top: 11,
-					right: 12,
-					display: 'flex',
-					gap: 6,
-					alignItems: 'center',
-				}}
-			>
-				<button
-					type="button"
-					onClick={() => setHistoryIndex((i) => Math.max(0, i - 1))}
-					disabled={!canUndo}
-					style={buttonStyle(canUndo)}
-				>
-					Undo
-				</button>
-				<button
-					type="button"
-					onClick={() => setHistoryIndex((i) => Math.min(history.length, i + 1))}
-					disabled={!canRedo}
-					style={buttonStyle(canRedo)}
-				>
-					Redo
-				</button>
-				<button
-					type="button"
-					onClick={() => {
-						setHistory([]);
-						setHistoryIndex(0);
-					}}
-					disabled={!canReset}
-					style={{
-						...buttonStyle(canReset),
-						backgroundColor: '#e34242',
-						borderRadius: 6,
-						border: 'none'
-					}}
-				>
-					Reset
-				</button>
+			<div className={`segmented-glow-button simple-glow${!showGlow ? ' hide-orbit' : ''}`} style={{ position: 'absolute', top: 11, right: 12 }}>
+				<div className="segment-container">
+					<button
+						type="button"
+						className={`segment ${!canUndo ? 'inactive' : ''}`}
+						onClick={() => {
+							if (canUndo) setShowGlow(false);
+							setHistoryIndex((i) => Math.max(0, i - 1));
+						}}
+						disabled={!canUndo}
+					>
+						Undo
+					</button>
+					<button
+						type="button"
+						className={`segment ${!canRedo ? 'inactive' : ''}`}
+						onClick={() => {
+							if (canRedo) setShowGlow(false);
+							setHistoryIndex((i) => Math.min(history.length, i + 1));
+						}}
+						disabled={!canRedo}
+					>
+						Redo
+					</button>
+					<button
+						type="button"
+						className={`segment ${!canReset ? 'inactive' : ''}`}
+						onClick={() => {
+							if (canReset) setShowGlow(false);
+							setHistory([]);
+							setHistoryIndex(0);
+						}}
+						disabled={!canReset}
+					>
+						Reset
+					</button>
+				</div>
 			</div>
 			<svg width={WIDTH} height={HEIGHT} style={{ display: 'block' }}>
 				<defs>
@@ -392,8 +380,8 @@ const SingleVarGraph = () => {
 					>
 						<path
 							d={`M 0 0 L 0 ${GRID_CELL} M 0 0 L ${GRID_CELL} 0 M ${GRID_CELL} 0 L ${GRID_CELL} ${GRID_CELL} M 0 ${GRID_CELL} L ${GRID_CELL} ${GRID_CELL}`}
-							stroke="#e0e0e0"
-							strokeWidth="0.5"
+							stroke="#e6e6e6"
+							strokeWidth="1"
 							fill="none"
 						/>
 					</pattern>
@@ -401,11 +389,11 @@ const SingleVarGraph = () => {
 				<rect width={WIDTH} height={HEIGHT} fill="url(#grid)" />
 				{/* Main horizontal line (stops at arrow bases so it doesn't overlap arrow tips) */}
 				<line
-					x1={lineDrawStart + 8}
+					x1={lineDrawStart + 10}
 					y1={LINE_Y}
-					x2={lineDrawEnd - 8}
+					x2={lineDrawEnd - 10}
 					y2={LINE_Y}
-					stroke="#333"
+					stroke="#999999"
 					strokeWidth={2}
 				/>
 				{/* Ticks and labels */}
@@ -418,18 +406,19 @@ const SingleVarGraph = () => {
 								y1={LINE_Y}
 								x2={x}
 								y2={LINE_Y + 10}
-								stroke="#333"
+								stroke="#999999"
 								strokeWidth={1.5}
 							/>
 							<text
 								x={x}
 								y={LINE_Y + 26}
 								textAnchor="middle"
-								fontSize={14}
-								fill="#333"
-								fontFamily="system-ui, sans-serif"
+								fontSize="14px"
+								fontWeight="bold"
+								fill="#999999"
+								fontFamily="'Latin Modern Roman', serif"
 							>
-								{value}
+								{value < 0 ? '\u002D' + (-value) : value}
 							</text>
 						</g>
 					);
@@ -474,12 +463,12 @@ const SingleVarGraph = () => {
 					))}
 				{/* Gray number-line arrows (drawn first so blue segment arrows can cover them) */}
 				<polygon
-					points={`${lineDrawStart + 8},${LINE_Y - 6} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 8},${LINE_Y + 6}`}
-					fill="#333"
+					points={`${lineDrawStart + 10},${LINE_Y - 7} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 10},${LINE_Y + 7}`}
+					fill="#999999"
 				/>
 				<polygon
-					points={`${lineDrawEnd - 8},${LINE_Y - 6} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 8},${LINE_Y + 6}`}
-					fill="#333"
+					points={`${lineDrawEnd - 10},${LINE_Y - 7} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 10},${LINE_Y + 7}`}
+					fill="#999999"
 				/>
 				{/* Arrows on drawn segments that extend to the graph ends (same position/size as gray arrows so they cover them) */}
 				{segments.flatMap((seg, segIdx) => {
@@ -490,7 +479,7 @@ const SingleVarGraph = () => {
 						arrows.push(
 							<polygon
 								key={`${segIdx}-left`}
-								points={`${lineDrawStart + 8},${LINE_Y - 6} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 8},${LINE_Y + 6}`}
+								points={`${lineDrawStart + 10},${LINE_Y - 7} ${lineDrawStart},${LINE_Y} ${lineDrawStart + 10},${LINE_Y + 7}`}
 								fill="#1967d2"
 							/>
 						);
@@ -499,7 +488,7 @@ const SingleVarGraph = () => {
 						arrows.push(
 							<polygon
 								key={`${segIdx}-right`}
-								points={`${lineDrawEnd - 8},${LINE_Y - 6} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 8},${LINE_Y + 6}`}
+								points={`${lineDrawEnd - 10},${LINE_Y - 7} ${lineDrawEnd},${LINE_Y} ${lineDrawEnd - 10},${LINE_Y + 7}`}
 								fill="#1967d2"
 							/>
 						);

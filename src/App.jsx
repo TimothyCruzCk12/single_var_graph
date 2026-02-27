@@ -1,4 +1,5 @@
 import React from 'react';
+import './App.css';
 import SingleVarGraph from './components/SingleVarGraph'
 
 
